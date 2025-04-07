@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <title>Vanilla Weather Application</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 30px;
+        background-color: #f4eeff; /* First Color */
+      }
+      header {
+        border-bottom: 1px solid #a6b1e1; /* Third Color */
+        padding: 0 0 30px;
+      }
+      .weather-application {
+        background: #dcd6f7; /* Second Color */
+        max-width: 600px;
+        margin: 30px auto;
+        padding: 40px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 20px;
+        font-size: 14px;
+      }
+      .search-input {
+        background-color: #f4eeff; /* First Color */
+        width: 80%;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        padding: 15px 20px;
+      }
+
+      .search-button {
+        padding: 15px;
+        border: none;
+        border-radius: 6px;
+        background: #424874; /* Fourth Color */
+        font-size: 16px;
+        margin-left: 10px;
+        color: #ffffff;
+      }
+      main {
+        padding: 15px 0;
+      }
+      .weather-data {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      footer {
+        border-top: 1px solid #a6b1e1; /* Third Color */
+        padding: 30px 0 0 0;
+        text-align: center;
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.5);
+      }
+
+      footer a {
+        color: #424874; /* Fourth Color */
+      }
+      .emoji {
+        width: 88px;
+        height: 88px;
+        display: inline-block;
+        object-fit: contain;
+      }
+      .number {
+        font-size: 60px;
+        display: inline-block;
+        position: relative;
+        margin-left: -10px;
+      }
+
+      .unit {
+        font-size: 20px;
+        position: absolute;
+        top: 1px;
+        right: -10px;
+      }
+      .emoji-container {
+        position: relative;
+      }
+      .forecast-container {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 20px;
+        gap: 7px;
+      }
+
+      .forecast {
+        flex: 1;
+        background-color: #ffffff; /* Keep white for better contrast */
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 10px;
+        text-align: center;
+        font-size: 14px;
+      }
+
+      .forecast-day {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #424874; /* Fourth Color */
+      }
+
+      .forecast-emoji {
+        font-size: 30px;
+        margin-bottom: 5px;
+      }
+
+      .forecast-temperatures {
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      /* Custom Color Palette */
+      .first-color {
+        background: #f4eeff;
+      }
+
+      .second-color {
+        background: #dcd6f7;
+      }
+
+      .third-color {
+        background: #a6b1e1;
+      }
+
+      .fourth-color {
+        background: #424874;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="weather-application">
+      <header>
+        <form class="search-form" id="search-form">
+          <input
+            type="search"
+            placeholder="Enter a city"
+            class="search-input"
+            id="search-input"
+            required
+          />
+          <input type="submit" value="Search" class="search-button" />
+        </form>
+      </header>
+      <main>
+        <div class="weather-data">
+          <div>
+            <h1 class="city" id="city">Paris</h1>
+            <p>
+              <span id="time"></span>, <span id="condition"></span>
+              <br />
+              Humidity: <strong id="humidity"></strong>, Wind:
+              <strong id="windspeed"></strong>
+            </p>
+          </div>
+          <span class="emoji-container">
+            <div class="emoji" id="emoji"></div>
+            <div class="number" id="number">15</div>
+            <div class="unit">°C</div>
+          </span>
+        </div>
+        <div class="forecast-container" id="forecast-container"></div>
+      </main>
+      <footer>
+        This project is coded by <a href="" target="_blank">Justine Ziola</a> and is
+        open-sourced on <a href="" target="_blank">Github</a> and hosted on
+        <a href="" target="_blank">Netlify</a>.
+      </footer>
+    </div>
+    <script>
+      function displayWeather(response) {
+        let temperatureElement = document.querySelector("#number");
+        let temperature = response.data.temperature.current;
+        let cityElement = document.querySelector("#city");
+        let conditionElement = document.querySelector("#condition");
+        let humidityElement = document.querySelector("#humidity");
+        let windspeedElement = document.querySelector("#windspeed");
+        let timeElement = document.querySelector("#time");
+        let emojiElement = document.querySelector("#emoji");
+
+        cityElement.innerHTML = response.data.city;
+        temperatureElement.innerHTML = Math.round(temperature);
+        conditionElement.innerHTML = response.data.condition.description;
+        humidityElement.innerHTML = `${response.data.temperature.humidity}%`;
+        windspeedElement.innerHTML = `${response.data.wind.speed}km/h`;
+        timeElement.innerHTML = formatDate(new Date(response.data.time * 1000));
+        let icon_url = response.data.condition.icon_url;
+        emojiElement.innerHTML = `<img src="${icon_url}" class="emoji" alt="Weather Icon" />`;
+
+        getForecast(response.data.city);
+      }
+
+      function formatDate(date) {
+        let minutes = date.getMinutes();
+        let hours = date.getHours();
+        let days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        let day = days[date.getDay()];
+
+        if (minutes < 10) {
+          minutes = `0${minutes}`;
+        }
+
+        return `${day} ${hours}:${minutes}`;
+      }
+
+      function displayForecast(response) {
+        let forecastContainer = document.querySelector("#forecast-container");
+        let forecastHtml = "";
+
+        response.data.daily.forEach(function (day, index) {
+          if (index < 5) {
+            forecastHtml += `
+                <div class="forecast">
+                    <div class="forecast-day">${
+                      formatDate(new Date(day.time * 1000)).split(" ")[0]
+                    }</div>
+                    <div class="forecast-emoji">
+                        <img src="${
+                          day.condition.icon_url
+                        }" alt="Weather Icon" class="icon" />
+                    </div>
+                    <div class="forecast-temperatures">
+                        <span>${Math.round(
+                          day.temperature.maximum
+                        )}°</span> / <span>${Math.round(
+              day.temperature.minimum
+            )}°</span>
+                    </div>
+                </div>`;
+          }
+        });
+
+        forecastContainer.innerHTML = forecastHtml;
+      }
+
+      function getForecast(city) {
+        let apiKey = "7da4d2833b785tc382cf9d899bo46033";
+        let apiUrl = `https://api.shecodes.io/weather/v1/forecast?query=${city}&key=${apiKey}&units=metric`;
+        axios.get(apiUrl).then(displayForecast);
+      }
+
+      function searchCity(city) {
+        let apiKey = "7da4d2833b785tc382cf9d899bo46033";
+        let apiUrl = `https://api.shecodes.io/weather/v1/current?query=${city}&key=${apiKey}&units=metric`;
+        axios.get(apiUrl).then(displayWeather);
+      }
+
+      function handleSearchFormSubmit(event) {
+        event.preventDefault();
+        let searchInputElement = document.querySelector("#search-input");
+        searchCity(searchInputElement.value);
+      }
+
+      let searchFormElement = document.querySelector("#search-form");
+      searchFormElement.addEventListener("submit", handleSearchFormSubmit);
+
+      searchCity("Paris");
+    </script>
+  </body>
+</html>
